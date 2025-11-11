@@ -10,20 +10,39 @@ class UsersController {
     if (!password) return res.status(400).json({ error: 'Missing password' });
 
     try {
-      // Check if user already exists
       const existingUser = await dbClient.collection('users').findOne({ email });
       if (existingUser) return res.status(400).json({ error: 'Already exist' });
 
-      // Hash password using SHA1
       const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
 
-      // Insert new user
+
       const result = await dbClient.collection('users').insertOne({ email, password: hashedPassword });
 
       return res.status(201).json({ id: result.insertedId, email });
     } catch (err) {
       return res.status(500).json({ error: 'Internal server error' });
     }
+  }
+
+  static async getMe(req, res) {
+    const token = req.header('X-Token');
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await dbClient.db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    return res.status(200).json({ id: user._id, email: user.email });
   }
 }
 
