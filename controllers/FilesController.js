@@ -186,6 +186,41 @@ class FilesController {
             parentId: file.parentId,
         });
     }
+
+    static async getFile(req, res) {
+        const { id } = req.params;
+
+        const file = await dbClient.db.collection('files').findOne({ _id: new ObjectId(id) });
+        if (!file) return res.status(404).json({ error: 'Not found' });
+
+        const token = req.header('X-Token');
+        let userId = null;
+
+        if (token) {
+            const key = `auth_${token}`;
+            userId = await redisClient.get(key);
+        }
+
+        if (!file.isPublic) {
+            if (userId || userId/this.toString() !== file.userId.toString()) {
+                return res.status(404).json({ error: 'Not found' })
+            }
+        }
+
+        if (file.type === 'folder') {
+            return res.status(404).json({ error: "A folder doesn't have content" });
+        }
+
+        try {
+            const data = await fs.readFile(file.localPath);
+            const mimeType = mime.contentType(file.name) || 'application/octet-stream';
+
+            res.setHeader('Content-Type', mimeType);
+            return res.status(200).send(data);
+        } catch (err) {
+            return res.status(404).json({ error: 'Not found' });
+        }
+    }
 }
 
 export default FilesController;
