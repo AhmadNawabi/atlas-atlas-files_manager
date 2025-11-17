@@ -78,7 +78,7 @@ class FilesController {
 
         const file = await dbClient.db.collection('files').findOne({
             _id: new ObjectId(fileId),
-            userId: new ObjectId(userId);
+            userId: new ObjectId(userId),
         });
 
 
@@ -95,7 +95,7 @@ class FilesController {
 
     }
 
-      static async getIndex(req, res) {
+    static async getIndex(req, res) {
         const token = req.header('X-Token');
         const key = `auth_${token}`;
         const userId = await redisClient.get(key);
@@ -127,6 +127,65 @@ class FilesController {
         return res.json(formatted);
     }
 
+    static async putPublish(req, res) {
+    const token = req.header('X-Token');
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const fileId = req.params.id;
+
+    const file = await dbClient.db.collection('files').findOne({
+        _id: new ObjectId(fileId),
+        userId: new ObjectId(userId),
+    });
+
+    if (!file) return res.status(404).json({ error: 'Not found' });
+
+    await dbClient.db.collection('files').updateOne(
+        { _id: new ObjectId(fileId) },
+        { $set: { isPublic: true } }
+    );
+
+    return res.status(200).json({
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: true,
+        parentId: file.parentId,
+    });
+}
+
+    static async putUnpublish(req, res) {
+        const token = req.header('X-Token');
+        const key = `auth_${token}`;
+        const userId = await redisClient.get(key);
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const fileId = req.params.id;
+
+        const file = await dbClient.db.collection('files').findOne({
+            _id: new ObjectId(fileId),
+            userId: new ObjectId(userId),
+        });
+
+        if (!file) return res.status(404).json({ error: 'Not found' });
+
+        await dbClient.db.collection('files').updateOne(
+            { _id: new ObjectId(fileId) },
+            { $set: { isPublic: false } }
+        );
+
+        return res.status(200).json({
+            id: file._id,
+            userId: file.userId,
+            name: file.name,
+            type: file.type,
+            isPublic: false,
+            parentId: file.parentId,
+        });
+    }
 }
 
 export default FilesController;
