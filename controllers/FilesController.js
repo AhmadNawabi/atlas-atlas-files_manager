@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { pormises as fs } from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 import { ObjectId } from 'mongodb';
 import redisClient from '../utils/redis';
@@ -66,6 +66,65 @@ class FilesController {
         isPublic,
         parentId,
     });
+    }
+
+    static async getShow(req, res) {
+        const token = req.header('X-Token');
+        const key = `auth_${token}`;
+        const userId = await redisClient.get(key);
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const fileId = req.params.id;
+
+        const file = await dbClient.db.collection('files').findOne({
+            _id: new ObjectId(fileId),
+            userId: new ObjectId(userId);
+        });
+
+
+        if (!file) return res.status(404).json({ error: 'Not found' });
+
+        return res.json({
+            id: file._id,
+            userId: file.userId,
+            name: file.name,
+            type: file.type,
+            isPublic: file.isPublic,
+            parentId: file.parentId,
+        });
+
+    }
+
+      static async getIndex(req, res) {
+        const token = req.header('X-Token');
+        const key = `auth_${token}`;
+        const userId = await redisClient.get(key);
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const parentId = req.query.parentId || 0;
+        const page = parseInt(req.query.page) || 0;
+
+        const matchQuery =
+            parentId === '0' || parentId === 0
+                ? { userId: new ObjectId(userId), parentId: 0 }
+                : { userId: new ObjectId(userId), parentId: new ObjectId(parentId) };
+
+        const files = await dbClient.db.collection('files').aggregate([
+            { $match: matchQuery },
+            { $skip: page * 20 },
+            { $limit: 20 },
+        ]).toArray();
+
+         const formatted = files.map((file) => ({
+            id: file._id,
+            userId: file.userId,
+            name: file.name,
+            type: file.type,
+            isPublic: file.isPublic,
+            parentId: file.parentId,
+        }));
+
+        return res.json(formatted);
     }
 
 }
