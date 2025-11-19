@@ -1,4 +1,5 @@
-import Queue from 'bull';
+import pkg from 'bull';
+const Queue = pkg;
 import dbClient from './utils/db.js';
 import imageThumbnail from 'image-thumbnail';
 import fs from 'fs';
