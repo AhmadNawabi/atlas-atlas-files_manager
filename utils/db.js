@@ -7,38 +7,53 @@ class DBClient {
         const database = process.env.DB_DATABASE || 'files_manager';
 
         const url = `mongodb://${host}:${port}`;
-        this.client = new MongoClient(url, { useUnifiedTopology: true });
+        this.client = new MongoClient(url);
         this.dbName = database;
         this.connected = false;
+        this.connecting = null; // Track connection promise
 
-        this.client.connect()
-        .then(() => {
-            this.connected = true;
-            console.log(`Connected successfully to MongoDB at ${url}/${database}`);
-        })
-        .catch((err) => {
-            this.connected = false;
-            console.error('MongoDB connection error:', err)
-        });
+        this.connecting = this.connect(); // Start connection immediately
     }
 
-    isAlive() {
-        return this.connected && this.client.isConnected();
+    async connect() {
+        if (this.connected) return; // Already connected
+        try {
+            await this.client.connect();
+            this.connected = true;
+            console.log(`Connected successfully to MongoDB at ${this.dbName}`);
+        } catch (err) {
+            this.connected = false;
+            console.error('MongoDB connection error:', err);
+        }
+    }
+
+    async isAlive() {
+        // Wait for connection if it’s still in progress
+        if (this.connecting) await this.connecting;
+        return this.connected && this.client.topology?.isConnected();
     }
 
     async nbUsers() {
-        if (!this.isAlive()) return 0;
+        if (!(await this.isAlive())) return 0;
         const db = this.client.db(this.dbName);
         return db.collection('users').countDocuments();
     }
 
     async nbFiles() {
-        if (!this.isAlive()) return 0;
+        if (!(await this.isAlive())) return 0;
         const db = this.client.db(this.dbName);
         return db.collection('files').countDocuments();
     }
+
+    async close() {
+        if (this.connected) {
+            await this.client.close();
+            this.connected = false;
+            console.log('MongoDB connection closed.');
+        }
+    }
 }
 
-// Export a Single instance
+// Export a single instance
 const dbClient = new DBClient();
 export default dbClient;
