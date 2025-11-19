@@ -1,0 +1,34 @@
+{
+  "name": "atlas-atlas-files_manager",
+  "version": "1.0.0",
+  "description": "**Program:** 2025SU-TUL-FS-T4  \r **Project Type:** Back-end Development (Node.js, MongoDB, Redis)  \r **Instructor:** Tomas Martinez  \r **Weight:** 1",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "start-worker": "node worker.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AhmadNawabi/atlas-atlas-files_manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AhmadNawabi/atlas-atlas-files_manager/issues"
+  },
+  "homepage": "https://github.com/AhmadNawabi/atlas-atlas-files_manager#readme",
+  "dependencies": {
+    "bull": "^4.16.5",
+    "express": "^5.1.0",
+    "image-thumbnail": "^1.0.17",
+    "mime-types": "^3.0.1",
+    "mongodb": "^7.0.0",
+    "redis": "^5.9.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
