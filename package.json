@@ -1,6 +1,7 @@
 {
   "name": "atlas-atlas-files_manager",
   "version": "1.0.0",
+  "type": "module",
   "description": "**Program:** 2025SU-TUL-FS-T4  \r **Project Type:** Back-end Development (Node.js, MongoDB, Redis)  \r **Instructor:** Tomas Martinez  \r **Weight:** 1",
   "main": "server.js",
   "scripts": {
